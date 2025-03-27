@@ -4,34 +4,14 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from pymongo import MongoClient
-from config.mongo_config import MongoConfig
 
 # Define the scope for Google Drive API
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
-# Function to connect to MongoDB Atlas and retrieve credentials
-def get_credentials_from_mongodb():
-    # Fetch configuration from MongoDB
-    mongo_uri = st.secrets["MONGO_URI"]  # Store the MongoDB URI in Streamlit Secrets
-    db_name = st.secrets["db_name"]
-    collection_name = st.secrets["collection_name"]
-    mongo_config = MongoConfig(mongo_uri, db_name, collection_name)
-    credentials_doc = mongo_config.fetch_config({"name": "google_drive_credentials"})
-
-    st.write("MongoDB URI:", mongo_uri)
-    st.write("Google Credentials JSON:", credentials_doc)
-    
-    # Retrieve the credentials document
-    #credentials_doc = collection.find_one()
-    if not credentials_doc:
-        raise ValueError("Credentials not found in MongoDB Atlas.")
-    
-    return credentials_doc["data"]
-
 # Function to authenticate and get the Google Drive service
 def get_drive_service():
     creds = None
+    
     # Check if token.pickle file exists (stores user credentials)
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
@@ -42,18 +22,11 @@ def get_drive_service():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # Fetch credentials from MongoDB Atlas
-            credentials_json = get_credentials_from_mongodb()
+            # Create the OAuth flow in headless mode
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
             
-            # Write the credentials to a temporary file
-            with open("temp_credentials.json", "w") as temp_file:
-                temp_file.write(credentials_json)
-            
-            flow = InstalledAppFlow.from_client_secrets_file("temp_credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-            
-            # Clean up the temporary file
-            os.remove("temp_credentials.json")
+            # Run the flow in console mode (no browser)
+            creds = flow.run_console()
         
         # Save the credentials for future use
         with open('token.pickle', 'wb') as token:
