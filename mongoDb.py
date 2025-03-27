@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 # Connect to MongoDB Atlas
-client = MongoClient("mongodb+srv://55brains:d9Lhrig3kDnvTwDu@resumeanalyzer.z5cc9.mongodb.net/?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority")
 db = client["google_drive_app"]
 collection = db["credentials"]
 
