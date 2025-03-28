@@ -6,19 +6,20 @@ import json
 import streamlit as st
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from config.mongo_config import MongoConfig
 
 # Define the scope for Google Drive API
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 # Function to connect to MongoDB Atlas and retrieve credentials
 def get_credentials_from_mongodb():
-    # Connect to MongoDB Atlas
-    client = MongoClient("mongodb+srv://55brains:d9Lhrig3kDnvTwDu@resumeanalyzer.z5cc9.mongodb.net/?retryWrites=true&w=majority")
-    db = client["google_drive_app"]
-    collection = db["credentials"]
-        
-    # Retrieve the credentials document
-    credentials_doc = collection.find_one({"name": "google_drive_credentials"})
+    # Fetch configuration from MongoDB
+    mongo_uri = st.secrets["MONGO_URI"]  # Store the MongoDB URI in Streamlit Secrets
+    db_name = st.secrets["db_name"]
+    collection_name = st.secrets["collection_name"]
+    mongo_config = MongoConfig(mongo_uri, db_name, collection_name)
+    credentials_doc = mongo_config.fetch_config({"name": "google_drive_credentials"})
+
     if not credentials_doc:
         raise ValueError("Credentials not found in MongoDB Atlas.")
     
